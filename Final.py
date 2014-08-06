@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #"""
 #Created on Wed Jul 16 16:24:58 2014
-#
+#see data!!
 #@author: Vedant@MIST Lab
 #"""
 import multiprocessing
@@ -18,6 +18,8 @@ from ConfigParser import SafeConfigParser
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 import numpy as np
+from scipy.interpolate import interp1d
+import csv
 #import time as T
 
 def cls():
@@ -36,14 +38,14 @@ def time_proc(ite):
     DelT=round(Total_T*24*60*60/Ilim)
     t=spt.Ticktock((t.TAI+(DelT*ite)),'TAI')
     t=t.convert('ISO')
-    time=str(t.UTC[0])
+    time=str(t.UTC[0])[0:10]+"T"+str(t.UTC[0])[11:]
     year=int(time[0:4])
     month=int(time[5:7])
     day=int(time[8:10])
     hour=int(time[11:13])
     minute=int(time[14:16])
     second=int(time[17:19])
-    print "Constructing Lookup: "+str(ite)+"/"+str(Ilim)
+    #print "Constructing Lookup: "+str(ite)+"/"+str(Ilim)
     if ite<Ilim:
         bol=True
     else:
@@ -55,12 +57,13 @@ def L_para(T_E):
     L1 = parser.get('mission_parameters', 'TLE_Line1')
     L2 = parser.get('mission_parameters', 'TLE_Line2')
     satellite = twoline2rv(L1, L2, wgs72)
-    position, velocity = satellite.propagate(T_E[0],T_E[1],T_E[2],T_E[3],T_E[4],T_E[5])    
-    Re= [x/6371 for x in position] 
+    position, velocity = satellite.propagate(T_E[0],T_E[1],T_E[2],T_E[3],T_E[4],T_E[5])  
+    T_E[6]
+    Re= [(x/6371.2) for x in position] 
     spaco = spc.Coords(Re, 'GEI', 'car')
     spaco.ticks=spt.Ticktock([T_E[6]], 'ISO')
     q=[90]
-    L=ir.get_Lm(spaco.ticks,spaco,q,extMag='T01STORM',intMag='IGRF') 
+    L=ir.get_Lm(spaco.ticks,spaco,q,extMag='T01STORM',intMag='IGRF')
     return satellite.alta*6371,satellite.altp*6371,math.degrees(satellite.inclo),L.items()[2][1][0][0]
         
 def Check_Error():
@@ -293,67 +296,106 @@ def adding_to_LUT(DAT):
     
     print ('Adding to Look-up File:(7/8)')
     data=driver.page_source
-    data=data[data.find("SEE")+78:data.find("SEE")+137]
-    Fobj=open("data.txt",'a')
-    DAT=" ".join(str(x) for x in DAT)
-    Fobj.writelines(DAT+" "+data+"\n")
+    data=data[data.find("SEE")+78:data.find("SEE")+89]
+    Fobj=open("data.csv",'a')
+    DAT=str(DAT)[1:-1]
+    Fobj.writelines(DAT+","+data+"\n")
     print(DAT+" "+data)
     Fobj.close()
     print "Done!"
 
-driver = webdriver.Chrome()
+def CSV_data_check(mission_para,req_L):
+    File_object=open('data.csv')
+    Csv_obj=csv.reader(File_object)
+    apogee=[]
+    perigee=[]
+    inclination=[]
+    L_values=[]
+    SEU_rates=[]
+    for row in Csv_obj:
+        apogee.append(row[0])
+        perigee.append(row[1])
+        inclination.append(row[2])
+        L_values.append(row[3])
+        SEU_rates.append(row[4])
+    i=0
+    while(i<len(apogee)):
+        if (float(apogee[i])==mission_para[0]) and (float(perigee[i])==mission_para[1]) and (float(inclination[i])==mission_para[2]) and (float(L_values[i]) in req_L):
+            del req_L[req_L.index(float(L_values[i]))]
+        i+=1
+    return req_L
+
+        
+def L_interpol_range():
+    L=[]
+    Condition=True
+    Ite=0
+    while(Condition):
+        spacepy.config['ncpus'] =1
+        cls()
+        Time_elements=time_proc(Ite)
+        LUT_data=L_para(Time_elements)
+        spacepy.config['ncpus'] = CPUcount
+        L.append(abs(LUT_data[3]))
+        Condition=Time_elements[7]
+        Ite+=1
+    L_num=parser.get('simulation_preferences','Number_of_L-shell_parameters')
+    L=np.linspace(min(L),max(L),L_num)
+    return L
+    
+def L_table_builder(L_unkn):
+    login(user)
+    Iteration=0
+    while Iteration<len(L_unkn):
+        LUT_data.pop()
+        LUT_data.append(L_unkn[Iteration]) 
+        f_res=False
+        while not f_res:
+            f_res=Work_folder_create(F_name,user)
+            F_Name=F_name.lower()
+        f_res=False
+        while not f_res:
+            f_res=TRP_form(F_Name,user,LUT_data)    
+        f_res=False
+        while not f_res:
+            f_res=GTRN_form(F_Name,user,LUT_data)
+        f_res=False
+        while not f_res:
+            f_res=FLUX_form(F_Name,user) 
+        f_res=False
+        while not f_res:
+            f_res=TRANS_form(F_Name,user)    
+        f_res=False
+        while not f_res:
+            f_res=LETSPEC_form(F_Name,user)
+        f_res=False
+        while not f_res:
+            f_res=HUP_form(F_Name,user)
+        adding_to_LUT(LUT_data)
+        Work_folder_delete(F_Name,user)
+        Iteration+=1
+    driver.close()    
+
+
+#main
+cls()
 parser = SafeConfigParser()
 parser.read('inputs.ini')
 base_url = "https://creme.isde.vanderbilt.edu/"
 F_name=parser.get('creme96', 'folder_name')
 user=parser.get('creme96', 'user')
-Condition=True
-Iteration_count=0
-L_range=[]
-while(Condition):
-    spacepy.config['ncpus'] =1
-    cls()
-    Time_elements=time_proc(Iteration_count)
-    LUT_data=L_para(Time_elements)
-    spacepy.config['ncpus'] = CPUcount
-    L_range.append(abs(LUT_data[3]))
-    Condition=Time_elements[7]
-    Iteration_count+=1 
-L_range=np.linspace(min(L_range),max(L_range),5)
+L_range=L_interpol_range()
 Iteration_count=0
 spacepy.config['ncpus'] =1
 cls()
 Time_elements=time_proc(Iteration_count)
 LUT_data=list(L_para(Time_elements))
 spacepy.config['ncpus'] = CPUcount
-login(user)
-
-while Iteration_count<len(L_range):
-    LUT_data.pop()
-    LUT_data.append(L_range[Iteration_count]) 
-    f_res=False
-    while not f_res:
-        f_res=Work_folder_create(F_name,user)
-    F_Name=F_name.lower()
-    f_res=False
-    while not f_res:
-        f_res=TRP_form(F_Name,user,LUT_data)    
-    f_res=False
-    while not f_res:
-        f_res=GTRN_form(F_Name,user,LUT_data)
-    f_res=False
-    while not f_res:
-        f_res=FLUX_form(F_Name,user) 
-    f_res=False
-    while not f_res:
-        f_res=TRANS_form(F_Name,user)    
-    f_res=False
-    while not f_res:
-        f_res=LETSPEC_form(F_Name,user)
-    f_res=False
-    while not f_res:
-        f_res=HUP_form(F_Name,user)
-    adding_to_LUT(LUT_data)
-    Work_folder_delete(F_Name,user)
-    Iteration_count+=1
-driver.close()
+Rem_pos=CSV_data_check(LUT_data[0:3],list(L_range))
+if len(Rem_pos):   
+    driver = webdriver.Chrome()
+    L_table_builder(Rem_pos)
+    cls()
+    print "LUT successfully constructed!"
+else:
+    print "LUT alreasy Exists!"
