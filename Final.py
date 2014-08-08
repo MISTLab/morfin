@@ -484,6 +484,5 @@ if len(Rem_pos):
     print "LUT successfully constructed!"
 else:
     print "LUT alreasy Exists!"
-TIME=T.time()-TIME
 SEU_calc(LUT_data[0:3])
 print "Simulated Mission Complete"
