@@ -19,8 +19,8 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 import numpy as np
 from scipy.interpolate import interp1d
-import csv
-#import time as T
+import csv,serial,random
+import time as T
 
 def cls():
     os.system(['clear','cls'][os.name == 'nt'])
@@ -45,12 +45,11 @@ def time_proc(ite):
     hour=int(time[11:13])
     minute=int(time[14:16])
     second=int(time[17:19])
-    #print "Constructing Lookup: "+str(ite)+"/"+str(Ilim)
     if ite<Ilim:
         bol=True
     else:
         bol=False
-    return year,month,day,hour,minute,second,time,bol
+    return year,month,day,hour,minute,second,time,bol,DelT
     
 def L_para(T_E):
     
@@ -58,11 +57,12 @@ def L_para(T_E):
     L2 = parser.get('mission_parameters', 'TLE_Line2')
     satellite = twoline2rv(L1, L2, wgs72)
     position, velocity = satellite.propagate(T_E[0],T_E[1],T_E[2],T_E[3],T_E[4],T_E[5])  
-    T_E[6]
     Re= [(x/6371.2) for x in position] 
     spaco = spc.Coords(Re, 'GEI', 'car')
     spaco.ticks=spt.Ticktock([T_E[6]], 'ISO')
     q=[90]
+#    q=spaco.convert('SM','sph')
+#    q=q.data[0][1]
     L=ir.get_Lm(spaco.ticks,spaco,q,extMag='T01STORM',intMag='IGRF')
     return satellite.alta*6371,satellite.altp*6371,math.degrees(satellite.inclo),L.items()[2][1][0][0]
         
@@ -300,7 +300,7 @@ def adding_to_LUT(DAT):
     Fobj=open("data.csv",'a')
     DAT=str(DAT)[1:-1]
     Fobj.writelines(DAT+","+data+"\n")
-    print(DAT+" "+data)
+    print(DAT+","+data+"\n")
     Fobj.close()
     print "Done!"
 
@@ -323,9 +323,9 @@ def CSV_data_check(mission_para,req_L):
         if (float(apogee[i])==mission_para[0]) and (float(perigee[i])==mission_para[1]) and (float(inclination[i])==mission_para[2]) and (float(L_values[i]) in req_L):
             del req_L[req_L.index(float(L_values[i]))]
         i+=1
+    File_object.close()
     return req_L
 
-        
 def L_interpol_range():
     L=[]
     Condition=True
@@ -339,14 +339,18 @@ def L_interpol_range():
         L.append(abs(LUT_data[3]))
         Condition=Time_elements[7]
         Ite+=1
-    L_num=parser.get('simulation_preferences','Number_of_L-shell_parameters')
-    L=np.linspace(min(L),max(L),L_num)
+#    L_num=parser.get('simulation_preferences','Number_of_L-shell_parameters')
+#    L=np.linspace(min(L),max(L),L_num)
+    L=[min(L),max(L)]
     return L
     
 def L_table_builder(L_unkn):
+    print "number of missing Datapoints in LUT :"+str(len(L_unkn))
     login(user)
     Iteration=0
     while Iteration<len(L_unkn):
+        cls()
+        print "Iteration: "+str(Iteration+1)+" of "+str(len(L_unkn))
         LUT_data.pop()
         LUT_data.append(L_unkn[Iteration]) 
         f_res=False
@@ -375,10 +379,91 @@ def L_table_builder(L_unkn):
         Work_folder_delete(F_Name,user)
         Iteration+=1
     driver.close()    
+    
+def SEU_calc(mission_para):
+    Condition=True
+    Ite=0
+    File_object=open('data.csv')
+    Csv_obj=csv.reader(File_object)
+    L_values=[]
+    SEU_rates=[]
+    apogee=0
+    perigee=0
+    inclination=0
+    bit_area=parser.get('FPGA_Parameters','Total_memory_used')
+    for row in Csv_obj:
+        print row
+        apogee=row[0]
+        perigee=row[1]
+        inclination=row[2]
+        if (abs(float(apogee)-mission_para[0])<0.000001) and (abs(float(perigee)-mission_para[1])<0.000001) and (abs(float(inclination)-mission_para[2])<0.000001):
+            L_values.append(float(row[3]))
+            SEU_rates.append(float(row[4])*float(bit_area)*8000000)
+    print L_values,SEU_rates
+#    L_fun=interp1d(L_values,SEU_rates,kind="cubic")
+    L_fun=interp1d(L_values,SEU_rates,kind="linear")
+    File_object.close()    
+    SEU=0
+    while(Condition):
+        spacepy.config['ncpus'] =1
+        Time_elements=time_proc(Ite)
+        LUT_data=L_para(Time_elements)
+        spacepy.config['ncpus'] = CPUcount
+        if LUT_data[3]>0:    
+            fun=L_fun(LUT_data[3])*Time_elements[8]
+            SEU+=fun
+        else:
+            SEU+=fun
+        if SEU>1:
+            print "Mission Time:"+str(Time_elements[6])
+            Inject_fault()
+            SEU-=1 
+        Condition=Time_elements[7]
+        Ite+=1
 
+def Inject_fault():
+    
+    COM=parser.get('simulation_preferences', 'COM_port')
+    ser = serial.Serial(COM,115200)
+    ser.bytesize = serial.EIGHTBITS #number of bits per bytes
+    ser.parity = serial.PARITY_NONE #set parity check: no parity
+    ser.stopbits = serial.STOPBITS_ONE #number of stop bits
+    ser.timeout = 0               #timeout block read
+    def read():
+        #response = ser.readline(32)
+        ser.flushInput() #flush input buffer, discarding all its contents
+        ser.flushOutput()
+        response = ser.readline(32)
+        #print("read data: " + response)
+        return response
+    
+    def write(char):
+        ser.flushInput() #flush input buffer, discarding all its contents
+        ser.flushOutput()
+        ser.write(char)   
+        T.sleep(0.03)
+        response1 = ser.readline(512)
+        #print("response1: " + response1)
+        return response1
+    con=True
+    write("*")
+    while (con):
+        T.sleep(random.uniform(0,1))
+        b=write("1")
+        if len(b)> 30 :
+            print b
+            con=False
+            write("#")
+    ser.close()        
+
+def USER_Check():
+    ip=raw_input("Please Ensure the Initializing file (inputs.ini) has all nececessary inputs and has been saved and closed")
+    ip=raw_input("Please Ensure the file data.csv is closed")
+    ip=raw_input("Please Ensure the folder name declared for CREME96 does not already Exist")
 
 #main
 cls()
+USER_Check()
 parser = SafeConfigParser()
 parser.read('inputs.ini')
 base_url = "https://creme.isde.vanderbilt.edu/"
@@ -399,3 +484,6 @@ if len(Rem_pos):
     print "LUT successfully constructed!"
 else:
     print "LUT alreasy Exists!"
+TIME=T.time()-TIME
+SEU_calc(LUT_data[0:3])
+print "Simulated Mission Complete"
