@@ -447,6 +447,7 @@ def Inject_fault():
         return response1
     con=True
     write("*")
+#    write("d")
     while (con):
         T.sleep(random.uniform(0,1))
         b=write("1")
