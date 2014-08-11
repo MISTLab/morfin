@@ -1,5 +1,7 @@
 #MORFIN- MIST Lab Orbital Radiation Fault INjector 11/08/2014
 
+Author:Vedant
+
 This project provides an estimate of the fault rates for Xilinx FPGA. The script has the capabilities to predict and inject single bit faults
 
 ##Dependencies:
@@ -61,4 +63,4 @@ The user will need to provide a clock of 50Hz for the operation for the SEM core
 
 - It is recommended to use Chrome for Selenium so as to provide a GUI to debug in case of errors from the CREME96 website (occasionally occurs, best way to deal with this is the wait for some time and run the program later), Chrome is considerably faster then most other GUI browsers.
 
-- There is a probability that the SEU is generated in the SEM core itself and this would cause problems in the FPGA to simulate further faults or to communicate with the system on the other end of the UART.(Although this is extremely rare as the area occupied by the Core is negligible, during tests this failure wasn't experienced until 10,000 faults were simulated) 
+- There is a probability that the SEU is generated in the SEM core itself and this would cause problems in the FPGA to simulate further faults or to communicate with the system on the other end of the UART.(Although this is extremely rare as the area occupied by the Core is negligible, during tests this failure wasn't experienced until 10,000 faults were simulated)
