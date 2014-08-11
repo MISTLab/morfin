@@ -11,17 +11,29 @@ The script has been written for Python 2.7 and has been tested for Windows 7, Sp
 The project makes use of the following modules available for python:
 
 -Selenium
+
 -sgp4
+
 -Spacepy
+
 -ConfigParser
+
 -csv
+
 -time
+
 -multiprocessing
+
 -os
+
 -math
+
 -numpy
+
 -scipy
+
 -serial
+
 -random
 
 The FPGA under test needs to have the SEM core provided by Xilinx: http://www.xilinx.com/products/intellectual-property/SEM.htm
