@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 #"""
 #Created on Wed Jul 16 16:24:58 2014
-#see data!!
+
 #@author: Vedant@MIST Lab
 #"""
+
 import multiprocessing
 import spacepy
 CPUcount = multiprocessing.cpu_count()
@@ -94,7 +95,7 @@ def login(usr):
      
 def Work_folder_create(folder_name,usr):
     
-    print ('Creating Work Folder:(1/8)')
+    print ('Creating Work Folder:(1/9)')
     driver.get(base_url + "/CREME-MC/Members/"+usr)
     driver.find_element_by_xpath("//li[2]/dl/dt/a").click()
     driver.implicitly_wait(30)
@@ -111,7 +112,7 @@ def Work_folder_create(folder_name,usr):
 
 def Work_folder_delete(folder_name,usr):
     
-    print ('Deleting Work Folder:(8/8)')    
+    print ('Deleting Work Folder:(9/9)')    
     driver.get(base_url + "/CREME-MC/Members/"+usr+"/folder_contents") 
     i_d="//input[@id='cb_"+folder_name+"']"
     driver.find_element_by_xpath(i_d).click()
@@ -120,7 +121,7 @@ def Work_folder_delete(folder_name,usr):
 
 def TRP_form(folder_name,usr,sat_dat):
 
-    print ('Submiting TRP form:(2/8)')       
+    print ('Submiting TRP form:(2/9)')       
     driver.get(base_url + "/CREME-MC/Members/"+usr+"/"+folder_name+"/Trp") 
     driver.find_element_by_xpath("//ol[@id='OrbitalParameters']/li[3]/input").click()
     driver.find_element_by_id("apogee").clear()
@@ -154,7 +155,7 @@ def TRP_form(folder_name,usr,sat_dat):
     
 def GTRN_form(folder_name,usr,sat_dat):
     
-    print ('Submiting GTRN form:(3/8)')    
+    print ('Submiting GTRN form:(3/9)')    
     driver.get(base_url + "/CREME-MC/Members/"+usr+"/"+folder_name+"/Gtrn")
     driver.find_element_by_xpath("//ol[@id='OrbitalParameters']/li[3]/input").click()
     driver.find_element_by_id("apogee").clear()
@@ -184,7 +185,7 @@ def GTRN_form(folder_name,usr,sat_dat):
        return True    
    
 def FLUX_form(folder_name,usr):
-    print ('Submiting FLUX form:(4/8)')    
+    print ('Submiting FLUX form:(4/9)')    
     driver.get(base_url + "/CREME-MC/Members/"+usr+"/"+folder_name+"/Flux")
     driver.find_element_by_id("z2").clear()
     driver.find_element_by_id("z2").send_keys("92")
@@ -214,7 +215,7 @@ def FLUX_form(folder_name,usr):
     
 def TRANS_form(folder_name,usr):
 
-    print ('Submiting TRANS form:(5/8)')
+    print ('Submiting TRANS form:(5/9)')
     driver.get(base_url + "/CREME-MC/Members/"+usr+"/"+folder_name+"/Trans")
     driver.find_element_by_id("fluxFileId_button").click()
     driver.switch_to_window("filebrowser_popup")
@@ -236,7 +237,7 @@ def TRANS_form(folder_name,usr):
        
 def LETSPEC_form(folder_name,usr):
 
-    print ('Submiting LETSPEC form:(5/8)')    
+    print ('Submiting LETSPEC form:(6/9)')    
     driver.get(base_url + "/CREME-MC/Members/"+usr+"/"+folder_name+"/LetSpec")
     driver.find_element_by_id("fluxFileId_button").click()
     driver.switch_to_window("filebrowser_popup")
@@ -258,7 +259,7 @@ def LETSPEC_form(folder_name,usr):
     
 def HUP_form(folder_name,usr):
 
-    print ('Submiting HUP form:(6/8)')
+    print ('Submiting HUP form:(7/9)')
     driver.get(base_url + "/CREME-MC/Members/"+usr+"/"+folder_name+"/Hup")
     driver.find_element_by_id("letFileId_button").click()
     driver.switch_to_window("filebrowser_popup")
@@ -294,7 +295,7 @@ def HUP_form(folder_name,usr):
 
 def adding_to_LUT(DAT):
     
-    print ('Adding to Look-up File:(7/8)')
+    print ('Adding to Look-up File:(8/9)')
     data=driver.page_source
     data=data[data.find("SEE")+78:data.find("SEE")+89]
     Fobj=open("data.csv",'a')
@@ -319,10 +320,25 @@ def CSV_data_check(mission_para,req_L):
         L_values.append(row[3])
         SEU_rates.append(row[4])
     i=0
-    while(i<len(apogee)):
-        if (float(apogee[i])==mission_para[0]) and (float(perigee[i])==mission_para[1]) and (float(inclination[i])==mission_para[2]) and (float(L_values[i]) in req_L):
-            del req_L[req_L.index(float(L_values[i]))]
-        i+=1
+    if(len(req_L)>2):
+        while(i<len(apogee)):
+            if (abs(float(apogee[i])-mission_para[0])<0.00001) and (abs(float(perigee[i])-mission_para[1])<0.00001) and (abs(float(inclination[i])-mission_para[2])<0.00001) and (float(L_values[i]) in req_L):
+                del req_L[req_L.index(float(L_values[i]))]
+            i+=1
+    else:
+        mini=False
+        maxi=False
+        while(i<len(apogee)):
+            if (abs(float(apogee[i])-mission_para[0])<0.00001) and (abs(float(perigee[i])-mission_para[1])<0.00001) and (abs(float(inclination[i])-mission_para[2])<0.00001):
+                if (float(L_values[i]) < req_L[0]) and mini==False:
+                    mini=True
+                if (float(L_values[i]) > req_L[0]) and maxi==False:
+                    maxi=True
+            i+=1
+        if maxi==True:
+            del req_L[1]
+        if mini==True:
+            del req_L[0]
     File_object.close()
     return req_L
 
@@ -339,9 +355,8 @@ def L_interpol_range():
         L.append(abs(LUT_data[3]))
         Condition=Time_elements[7]
         Ite+=1
-#    L_num=parser.get('simulation_preferences','Number_of_L-shell_parameters')
-#    L=np.linspace(min(L),max(L),L_num)
-    L=[min(L),max(L)]
+    L_num=parser.get('simulation_preferences','Number_of_L-shell_parameters')
+    L=np.linspace(min(L),max(L),L_num)
     return L
     
 def L_table_builder(L_unkn):
@@ -396,12 +411,12 @@ def SEU_calc(mission_para):
         apogee=row[0]
         perigee=row[1]
         inclination=row[2]
-        if (abs(float(apogee)-mission_para[0])<0.000001) and (abs(float(perigee)-mission_para[1])<0.000001) and (abs(float(inclination)-mission_para[2])<0.000001):
+        if (abs(float(apogee)-mission_para[0])<0.00001) and (abs(float(perigee)-mission_para[1])<0.00001) and (abs(float(inclination)-mission_para[2])<0.00001):
             L_values.append(float(row[3]))
-            SEU_rates.append(float(row[4])*float(bit_area)*8000000)
+            SEU_rates.append(float(row[4])*float(bit_area)*8*1024)
     print L_values,SEU_rates
-#    L_fun=interp1d(L_values,SEU_rates,kind="cubic")
-    L_fun=interp1d(L_values,SEU_rates,kind="linear")
+    kind=parser.get("simulation_preferences","Curve_Type")
+    L_fun=interp1d(L_values,SEU_rates,kind=kind)
     File_object.close()    
     SEU=0
     while(Condition):
@@ -430,20 +445,18 @@ def Inject_fault():
     ser.stopbits = serial.STOPBITS_ONE #number of stop bits
     ser.timeout = 0               #timeout block read
     def read():
-        #response = ser.readline(32)
-        ser.flushInput() #flush input buffer, discarding all its contents
+        
+        ser.flushInput()
         ser.flushOutput()
         response = ser.readline(32)
-        #print("read data: " + response)
         return response
     
     def write(char):
-        ser.flushInput() #flush input buffer, discarding all its contents
+        ser.flushInput()
         ser.flushOutput()
         ser.write(char)   
         T.sleep(0.03)
         response1 = ser.readline(512)
-        #print("response1: " + response1)
         return response1
     con=True
     write("*")
@@ -484,6 +497,7 @@ if len(Rem_pos):
     cls()
     print "LUT successfully constructed!"
 else:
+    
     print "LUT alreasy Exists!"
 SEU_calc(LUT_data[0:3])
 print "Simulated Mission Complete"

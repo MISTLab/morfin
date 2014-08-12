@@ -40,6 +40,7 @@ The FPGA under test needs to have the SEM core provided by Xilinx: http://www.xi
 
 The user will need to provide a clock of 50Hz for the operation for the SEM core and one for determining the baud rate for the UART(it is advisable for the UART to run at the highest baud-rate possible i.e 115200).
 
+The user needs to have an account at :https://creme.isde.vanderbilt.edu/CREME-MC/ , to use the CREME96 model.
 
 ##Instructions:
 
@@ -64,7 +65,7 @@ The user will need to provide a clock of 50Hz for the operation for the SEM core
 
 -The Simulator displays the Memory address of the fault simulated and the mission time when the fault was encountered.
 
--the code has been currently configured to use the CRC auto repair function in the SEM core to revert the Bit flip, although it can be turned off by passing the character "d"(present in the code as a commented line Line 450). This feature can be used to test other scrubbers.(the CRC auto repair only corrects Single Upsets in the FPGA,  more complicated scrubbers should be used to correct Multiple Bit errors)
+-the code has been currently configured to use the CRC auto repair function in the SEM core to revert the Bit flip, although it can be turned off by passing the character "d"(present in the code as a commented line Line 463). This feature can be used to test other scrubbers.(the CRC auto repair only corrects Single Upsets in the FPGA,  more complicated scrubbers should be used to correct Multiple Bit errors)
 
 
 ##Note:
@@ -76,3 +77,5 @@ The user will need to provide a clock of 50Hz for the operation for the SEM core
 - It is recommended to use Chrome for Selenium so as to provide a GUI to debug in case of errors from the CREME96 website (occasionally occurs, best way to deal with this is the wait for some time and run the program later), Chrome is considerably faster then most other GUI browsers.
 
 - There is a probability that the SEU is generated in the SEM core itself and this would cause problems in the FPGA to simulate further faults or to communicate with the system on the other end of the UART.(Although this is extremely rare as the area occupied by the Core is negligible, during tests this failure wasn't experienced until 10,000 faults were simulated)
+
+- If the code stops after a few faults have been injected it is because the communication between the FPGA and the Desktop/PC has been lost, this may be because of the reason stated above. 
