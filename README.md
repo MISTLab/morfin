@@ -10,31 +10,19 @@ The script has been written for Python 2.7 and has been tested for Windows 7, Sp
 
 The project makes use of the following modules available for python:
 
--Selenium
-
--sgp4
-
--Spacepy
-
--ConfigParser
-
--csv
-
--time
-
--multiprocessing
-
--os
-
--math
-
--numpy
-
--scipy
-
--serial
-
--random
+- Selenium
+- sgp4
+- Spacepy
+- ConfigParser
+- csv
+- time
+- multiprocessing
+- os
+- math
+- numpy
+- scipy
+- serial
+- random
 
 The FPGA under test needs to have the SEM core provided by Xilinx: http://www.xilinx.com/products/intellectual-property/SEM.htm
 
@@ -63,9 +51,9 @@ The user needs to have an account at :https://creme.isde.vanderbilt.edu/CREME-MC
 
 ##Outputs:
 
--The Simulator displays the Memory address of the fault simulated and the mission time when the fault was encountered.
+- The Simulator displays the Memory address of the fault simulated and the mission time when the fault was encountered.
 
--the code has been currently configured to use the CRC auto repair function in the SEM core to revert the Bit flip, although it can be turned off by passing the character "d"(present in the code as a commented line Line 463). This feature can be used to test other scrubbers.(the CRC auto repair only corrects Single Upsets in the FPGA,  more complicated scrubbers should be used to correct Multiple Bit errors)
+- The code has been currently configured to use the CRC auto repair function in the SEM core to revert the Bit flip, although it can be turned off by passing the character "d"(present in the code as a commented line Line 463). This feature can be used to test other scrubbers.(the CRC auto repair only corrects Single Upsets in the FPGA,  more complicated scrubbers should be used to correct Multiple Bit errors)
 
 
 ##Note:

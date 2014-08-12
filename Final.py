@@ -62,7 +62,7 @@ def L_para(T_E):
     spaco = spc.Coords(Re, 'GEI', 'car')
     spaco.ticks=spt.Ticktock([T_E[6]], 'ISO')
     q=[90]
-#    q=spaco.convert('SM','sph')
+#    q=spaco.convert('SM','sph') #default value of 90 is used as it returns the most data-points, other values of q have more instances when the value returned is NaN
 #    q=q.data[0][1]
     L=ir.get_Lm(spaco.ticks,spaco,q,extMag='T01STORM',intMag='IGRF')
     return satellite.alta*6371,satellite.altp*6371,math.degrees(satellite.inclo),L.items()[2][1][0][0]
