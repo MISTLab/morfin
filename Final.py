@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #"""
 #Created on Wed Jul 16 16:24:58 2014
-
-#@author: Vedant@MIST Lab
+#author: Vedant@MIST Lab
+#MIT License
 #"""
 
 import multiprocessing
