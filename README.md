@@ -32,7 +32,7 @@ The user needs to have an account at :https://creme.isde.vanderbilt.edu/CREME-MC
 
 ##Instructions:
 
-- Copy all the files(inputs.ini,Final.py and data.csv) in the project to the script directory of python.
+- Copy all the files(inputs.ini,Morfin.py and data.csv) in the project to the script directory of python.
 
 - To specify you mission and simulation parameters use the inputs.ini file. The file is well commented to specify all the inputs.
 
@@ -66,4 +66,4 @@ The user needs to have an account at :https://creme.isde.vanderbilt.edu/CREME-MC
 
 - There is a probability that the SEU is generated in the SEM core itself and this would cause problems in the FPGA to simulate further faults or to communicate with the system on the other end of the UART.(Although this is extremely rare as the area occupied by the Core is negligible, during tests this failure wasn't experienced until 10,000 faults were simulated)
 
-- If the code stops after a few faults have been injected it is because the communication between the FPGA and the Desktop/PC has been lost, this may be because of the reason stated above. 
+- If the code stops after a few faults have been injected it is because the communication between the FPGA and the Desktop/PC has been lost, this may be because of the reason stated above.
